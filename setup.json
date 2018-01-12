@@ -1,0 +1,21 @@
+{
+    "author": "Max Levine",
+    "classifiers": [
+        "License :: OSI Approved :: BSD License",
+        "Operating System :: Unix",
+        "Operating System :: POSIX",
+        "Topic :: Utilities"
+    ],
+    "entry_points": {
+        "console_scripts": [
+            "click_signatures=click_signatures.cli:main"
+        ]
+    },
+    "include_package_data": true,
+    "install_requires": ["Click>=6.7", "pytest-cov>=2.5.1"],
+    "keywords": [],
+    "license": "BSD",
+    "name": "click_signatures",
+    "url": "github.com/leukgen/click_signatures",
+    "version": "0.1.0"
+}
