@@ -5,7 +5,6 @@ import os
 from click.testing import CliRunner
 
 from click_signatures import __version__
-from click_signatures import cli
 from click_signatures import commands
 
 
@@ -19,6 +18,7 @@ def test_click_signatures(tmpdir):
         "--sigprob", os.environ["SIG_PROB"],
         "--Rscript", os.environ["RSCRIPT"]
         ]
+
     result = runner.invoke(commands.mutationalpatterns, params)
     assert result.exit_code == 0
 
