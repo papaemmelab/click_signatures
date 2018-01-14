@@ -6,7 +6,6 @@ from os.path import join
 import os
 import subprocess
 import tempfile
-import time
 
 import click
 import vcf as pyvcf
@@ -61,7 +60,7 @@ def mutationalpatterns(outdir, sample_id, vcf, sigprob, rscript):
     total = 0
     filtered = 0
     vcf_reader = pyvcf.Reader(filename=vcf)
-    filtered_vcf = tempfile.NamedTemporaryFile()
+    filtered_vcf = tempfile.NamedTemporaryFile(mode="w")
     vcf_writer = pyvcf.Writer(filtered_vcf, vcf_reader)
 
     for record in vcf_reader:
@@ -77,7 +76,6 @@ def mutationalpatterns(outdir, sample_id, vcf, sigprob, rscript):
 
     click.echo("Total SNVs: " + str(total))
     click.echo("Passed SNVs: " + str(filtered))
-    click.echo("Running R Mutational Patterns")
 
     # Update tempfile but dont close/delete it.
     vcf_writer.flush()
@@ -91,7 +89,7 @@ def mutationalpatterns(outdir, sample_id, vcf, sigprob, rscript):
         "--sigprob", sigprob
         ]
 
-    # click.echo("\nRunning:\n%s\n" % " ".join(cmd))
+    click.echo("Running R Mutational Patterns:\n\n%s\n" % " ".join(cmd))
     subprocess.check_call(cmd)
 
     # Check output files were generated.
@@ -101,7 +99,6 @@ def mutationalpatterns(outdir, sample_id, vcf, sigprob, rscript):
         "strand_counts.tsv", "type_occurrences.png", "type_occurrences.tsv"
         ]
 
-    time.sleep(10)
-    click.echo("Checking output files")
     outputfiles = [join(outdir, f) for f in outputfiles]
     validators.validate_patterns_are_files(outputfiles)
+    click.echo("Output files OK.")
