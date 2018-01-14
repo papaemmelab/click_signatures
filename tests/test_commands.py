@@ -1,10 +1,9 @@
-"""Tests for click_signatures."""
+"""click_signatures commands tests."""
 
 import os
 
 from click.testing import CliRunner
 
-from click_signatures import __version__
 from click_signatures import commands
 
 
@@ -21,8 +20,3 @@ def test_click_signatures(tmpdir):
 
     result = runner.invoke(commands.mutationalpatterns, params)
     assert result.exit_code == 0
-
-
-def test_version():
-    """Sample test for the __version__ variable."""
-    assert __version__ == "0.1.0"
