@@ -6,6 +6,7 @@ from os.path import join
 import os
 import subprocess
 import tempfile
+import time
 
 import click
 import vcf as pyvcf
@@ -16,7 +17,7 @@ from click_signatures import validators
 ETC_DIR = abspath(join(dirname(__file__), "etc"))
 
 
-def makedirs(path, exist_ok=False):
+def makedirs(path, exist_ok=False):  # pylint: disable=unused-argument
     """Make dirs in python 2 does not support exist_ok flag."""
     if not os.path.exists(path):
         os.makedirs(path)
@@ -57,28 +58,29 @@ def mutationalpatterns(outdir, sample_id, vcf, sigprob, rscript):
     """Single Sample SNV mutation signature analysis (MutationalPatterns)."""
     makedirs(outdir, exist_ok=True)
 
+    total = 0
+    filtered = 0
     vcf_reader = pyvcf.Reader(filename=vcf)
     filtered_vcf = tempfile.NamedTemporaryFile()
     vcf_writer = pyvcf.Writer(filtered_vcf, vcf_reader)
 
-    total = 0
-    filtered = 0
     for record in vcf_reader:
-        hasASRD = "ASRD" in record.INFO.keys()
-        otherFILTER = True
-        if hasASRD and record.INFO["ASRD"] < 0.95:
-            otherFILTER = False
-        if not record.FILTER and otherFILTER:
+        total += 1
+        pass_asrd = True
+
+        if record.INFO.get("ASRD") is not None and record.INFO["ASRD"] < 0.95:
+            pass_asrd = False
+
+        if not record.FILTER and pass_asrd:
             vcf_writer.write_record(record)
             filtered += 1
-        total += 1
-    # Update tempfile but dont close/delete it
-    vcf_writer.flush()
 
     click.echo("Total SNVs: " + str(total))
     click.echo("Passed SNVs: " + str(filtered))
-
     click.echo("Running R Mutational Patterns")
+
+    # Update tempfile but dont close/delete it.
+    vcf_writer.flush()
 
     cmd = [
         rscript,
@@ -89,16 +91,17 @@ def mutationalpatterns(outdir, sample_id, vcf, sigprob, rscript):
         "--sigprob", sigprob
         ]
 
-    click.echo(" ".join(cmd))
+    # click.echo("\nRunning:\n%s\n" % " ".join(cmd))
     subprocess.check_call(cmd)
 
+    # Check output files were generated.
     outputfiles = [
         "96_profiles.png", "context.tsv", "contributions.tsv",
         "signature_contributions.png", "strand_bias.png", "strand_bias.tsv",
         "strand_counts.tsv", "type_occurrences.png", "type_occurrences.tsv"
         ]
 
-    outputfiles = [join(outdir, f) for f in outputfiles]
-
+    time.sleep(10)
     click.echo("Checking output files")
-    validators.check_patterns_are_files(outputfiles)
+    outputfiles = [join(outdir, f) for f in outputfiles]
+    validators.validate_patterns_are_files(outputfiles)
