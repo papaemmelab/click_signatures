@@ -1,0 +1,15 @@
+[paths]
+source =
+   click_signatures
+   */site-packages/click_signatures
+
+[run]
+include =
+    click_signatures/*
+
+source =
+    click_signatures
+    tests
+
+omit =
+    *click_signatures/__main__.py
