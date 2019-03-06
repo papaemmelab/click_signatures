@@ -53,17 +53,17 @@ cancer_signatures = cancer_signatures[as.vector(new_order),]
 # Add trinucletiode changes names as row.names
 row.names(cancer_signatures) = cancer_signatures$Somatic.Mutation.Type
 # Keep only 96 contributions of the signatures in matrix
-cancer_signatures = as.matrix(cancer_signatures[,4:33])
+cancer_signatures = as.matrix(cancer_signatures[,4:ncol(cancer_signatures)])
 fit_res <- fit_to_signatures(mutation_matrix, cancer_signatures)
 select <-(rowSums(fit_res$contribution) > 0)
 
 # Get rid of "Signature." from signature name
-sigs = gsub("([A-z])+(.)", "", rownames(fit_res$contribution))
+sigs = gsub("([A-z])+([.])", "", rownames(fit_res$contribution))
 contr = data.frame(sigs, fit_res$contribution)
 colnames(contr) = c("Signature", sample_name)
 write.table(contr, "contributions.tsv", sep="\t", quote=FALSE, row.names=FALSE)
 
-pal = colorRampPalette(brewer.pal(11,"Spectral"))(30)[select]
+pal = colorRampPalette(brewer.pal(11,"Spectral"))(ncol(cancer_signatures))[select]
 
 png(filename="signature_contributions.png", type="cairo", width = 8, height = 6, units = 'in', res=600)
 plot_contribution(
