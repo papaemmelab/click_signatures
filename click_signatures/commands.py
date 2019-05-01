@@ -8,12 +8,13 @@ import subprocess
 import tempfile
 
 import click
-import vcf as pyvcf
+from pysam import VariantFile
 
+from click_signatures import __version__
 from click_signatures import validators
 
 # This directory includes extra scripts required for the pipeline.
-ETC_DIR = abspath(join(dirname(__file__), "etc"))
+DATA_DIR = abspath(join(dirname(__file__), "data"))
 
 
 def makedirs(path, exist_ok=False):  # pylint: disable=unused-argument
@@ -23,81 +24,76 @@ def makedirs(path, exist_ok=False):  # pylint: disable=unused-argument
 
 
 @click.command()
+@click.version_option(version=__version__)
 @click.option(
     "--outdir",
     type=click.Path(dir_okay=True, writable=True, resolve_path=True),
     required=True,
-    help="Output Directory"
-    )
-@click.option(
-    "--id", "sample_id",
-    type=str,
-    required=True,
-    help="ID of Sample",
-    )
+    help="Output Directory",
+)
+@click.option("--id", "sample_id", type=str, required=True, help="ID of Sample")
 @click.option(
     "--vcf",
     type=click.Path(file_okay=True, readable=True, resolve_path=True),
     required=True,
-    help="SNP VCF File"
-    )
+    help="SNV VCF File",
+)
 @click.option(
     "--sigprob",
     type=click.Path(file_okay=True, readable=True, resolve_path=True),
     required=True,
-    help="Signature Probrability File from Sanger"
-    )
-@click.option(
-    "--Rscript",
-    type=click.Path(file_okay=True, readable=True, resolve_path=True),
-    default="Rscript",
-    help="Rscript path (default: Rscript)"
-    )
-def mutationalpatterns(outdir, sample_id, vcf, sigprob, rscript):
+    help="Signature Probrability File e.g. Sanger",
+)
+@click.option("--nofilter", is_flag=True, required=False, help="Dont filter VCF")
+def mutationalpatterns(outdir, sample_id, vcf, sigprob, nofilter):
     """Single Sample SNV mutation signature analysis (MutationalPatterns)."""
     makedirs(outdir, exist_ok=True)
 
     total = 0
     filtered = 0
-    vcf_reader = pyvcf.Reader(filename=vcf)
+    vcf_reader = VariantFile(vcf, mode="r")
     filtered_vcf = tempfile.NamedTemporaryFile(mode="w")
-    vcf_writer = pyvcf.Writer(filtered_vcf, vcf_reader)
+    vcf_writer = VariantFile(filtered_vcf, mode="w", header=vcf_reader.header)
 
-    for record in vcf_reader:
+    for record in vcf_reader.fetch():
         total += 1
-        pass_asrd = True
 
-        if record.INFO.get("ASRD") is not None and record.INFO["ASRD"] < 0.95:
-            pass_asrd = False
-
-        if not record.FILTER and pass_asrd:
-            vcf_writer.write_record(record)
+        if ("PASS" in list(record.filter) or not list(record.filter)) and not nofilter:
+            vcf_writer.write(record)
             filtered += 1
 
     click.echo("Total SNVs: " + str(total))
-    click.echo("Passed SNVs: " + str(filtered))
-
-    # Update tempfile but dont close/delete it.
-    vcf_writer.flush()
+    if not nofilter:
+        click.echo("Passed SNVs: " + str(filtered))
 
     cmd = [
-        rscript,
-        join(ETC_DIR, "mutationalpatterns.R"),
-        "--outdir", outdir,
-        "--id", sample_id,
-        "--vcf", filtered_vcf.name,
-        "--sigprob", sigprob
-        ]
+        "Rscript",
+        join(DATA_DIR, "mutationalpatterns.R"),
+        "--outdir",
+        outdir,
+        "--id",
+        sample_id,
+        "--vcf",
+        vcf if nofilter else filtered_vcf.name,
+        "--sigprob",
+        sigprob,
+    ]
 
-    click.echo("Running R Mutational Patterns:\n\n%s\n" % " ".join(cmd))
+    click.echo("Running R Mutational Patterns:%s" % " ".join(cmd))
     subprocess.check_call(cmd)
 
     # Check output files were generated.
     outputfiles = [
-        "96_profiles.png", "context.tsv", "contributions.tsv",
-        "signature_contributions.png", "strand_bias.png", "strand_bias.tsv",
-        "strand_counts.tsv", "type_occurrences.png", "type_occurrences.tsv"
-        ]
+        "96_profiles.png",
+        "context.tsv",
+        "contributions.tsv",
+        "signature_contributions.png",
+        "strand_bias.png",
+        "strand_bias.tsv",
+        "strand_counts.tsv",
+        "type_occurrences.png",
+        "type_occurrences.tsv",
+    ]
 
     outputfiles = [join(outdir, f) for f in outputfiles]
     validators.validate_patterns_are_files(outputfiles)

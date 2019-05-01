@@ -1,9 +1,13 @@
 {
-    "author": "Max Levine",
     "classifiers": [
-        "License :: OSI Approved :: BSD License",
+        "Intended Audience :: Developers",
+        "Intended Audience :: Science/Research",
+        "License :: OSI Approved :: MIT License",
+        "Natural Language :: English",
         "Operating System :: Unix",
         "Operating System :: POSIX",
+        "Programming Language :: Python :: 2.7",
+        "Programming Language :: Python :: 3",
         "Topic :: Utilities"
     ],
     "entry_points": {
@@ -11,11 +15,31 @@
             "click_signatures=click_signatures.cli:main"
         ]
     },
-    "include_package_data": true,
-    "install_requires": ["Click>=6.7", "pytest-cov>=2.5.1"],
+    "setup_requires": [
+        "pytest-runner==2.11.1"
+    ],
+    "install_requires": [
+        "docker==2.5.1","click>=6.7","pysam>=0.15.2"
+    ],
+    "extras_require": {
+        "test": [
+            "coverage>=4.4.2",
+            "pydocstyle>=2.1.1",
+            "pytest-cov==2.5.1",
+            "pytest==3.7.4",
+            "pytest-env==0.6.2",
+            "pytest-sugar>=0.9.1",
+            "pylint>=1.8.1",
+            "requests==2.18.4",
+            "tox==2.9.1"
+        ]
+    },
+    "author": "Max F. Levine",
     "keywords": [],
     "license": "BSD",
     "name": "click_signatures",
-    "url": "github.com/leukgen/click_signatures",
-    "version": "0.1.0"
+    "test_suite": "tests",
+    "long_description": "📘 learn more on `GitHub <https://github.com/papaemmelab/click_signatures>`_!",
+    "description": "✍️ Run MutationalPattern on single sample SNVs.",
+    "url": "https://github.com/papaemmelab/click_signatures"
 }

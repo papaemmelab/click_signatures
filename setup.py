@@ -1,28 +1,35 @@
 """click_signatures setup.py."""
 
-# python
-import io
+from os.path import join
+from os.path import abspath
+from os.path import dirname
 import json
-import os
 
-# third party
 from setuptools import find_packages
 from setuptools import setup
 
-ROOT = os.path.abspath(os.path.dirname(__file__))
+ROOT = abspath(dirname(__file__))
 
-
-def read(path, **kwargs):
-    """Return content of a file."""
-    return io.open(path, encoding=kwargs.get("encoding", "utf8")).read()
-
-
-# Please put setup keywords in the setup.json to keep this file clean.
-with open(os.path.join(ROOT, "setup.json"), "r") as f:
+# please put setup keywords in the setup.json to keep this file clean
+with open(join(ROOT, "setup.json"), "r") as f:
     SETUP = json.load(f)
 
+# see 4 > https://packaging.python.org/guides/single-sourcing-package-version/
+with open(join(ROOT, "click_signatures", "VERSION"), "r") as f:
+    VERSION = f.read().strip()
+
 setup(
-    long_description=read(os.path.join(ROOT, "README.md")),
+    # single source package version
+    version=VERSION,
+
+    # in combination with recursive-includes in MANIFEST.in, non-python files
+    # within the click_signatures will be copied into the
+    # site-packages and wheels installation directories
+    include_package_data=True,
+
+    # return a list all Python packages found within the ROOT directory
     packages=find_packages(),
+
+    # pass parameters loaded from setup.json including author and version
     **SETUP
     )

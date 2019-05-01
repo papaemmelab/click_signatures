@@ -1,22 +1,28 @@
-"""click_signatures commands tests."""
-
-import os
+from os.path import abspath
+from os.path import dirname
+from os.path import join
 
 from click.testing import CliRunner
 
-from click_signatures import commands
+from click_signatures import cli
+
+ROOT = abspath(dirname(__file__))
+
+DATA = join(ROOT, "data")
 
 
-def test_click_signatures(tmpdir):
-    """Sample test for the main command."""
+def test_mutationpatterns(tmpdir):
     runner = CliRunner()
     params = [
-        "--outdir", str(tmpdir),
-        "--id", os.environ["TEST_ID"],
-        "--vcf", os.environ["TEST_VCF"],
-        "--sigprob", os.environ["SIG_PROB"],
-        "--Rscript", os.environ["RSCRIPT"]
-        ]
+        "--outdir",
+        tmpdir,
+        "--vcf",
+        join(DATA, "test.vcf.gz"),
+        "--id",
+        "test",
+        "--sigprob",
+        join(DATA, "signatures_probabilities.txt"),
+    ]
+    result = runner.invoke(cli.main, params)
 
-    result = runner.invoke(commands.mutationalpatterns, params)
     assert result.exit_code == 0
