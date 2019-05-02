@@ -1,6 +1,4 @@
-from os.path import abspath
-from os.path import dirname
-from os.path import join
+from os.path import abspath, dirname, join
 
 from click.testing import CliRunner
 

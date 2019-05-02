@@ -17,12 +17,6 @@ from click_signatures import validators
 DATA_DIR = abspath(join(dirname(__file__), "data"))
 
 
-def makedirs(path, exist_ok=False):  # pylint: disable=unused-argument
-    """Make dirs in python 2 does not support exist_ok flag."""
-    if not os.path.exists(path):
-        os.makedirs(path)
-
-
 @click.command()
 @click.version_option(version=__version__)
 @click.option(
@@ -47,12 +41,12 @@ def makedirs(path, exist_ok=False):  # pylint: disable=unused-argument
 @click.option("--nofilter", is_flag=True, required=False, help="Dont filter VCF")
 def mutationalpatterns(outdir, sample_id, vcf, sigprob, nofilter):
     """Single Sample SNV mutation signature analysis (MutationalPatterns)."""
-    makedirs(outdir, exist_ok=True)
+    os.makedirs(outdir, exist_ok=True)
 
     total = 0
     filtered = 0
     vcf_reader = VariantFile(vcf, mode="r")
-    filtered_vcf = tempfile.NamedTemporaryFile(mode="w")
+    filtered_vcf = tempfile.NamedTemporaryFile(mode="w", delete=False)
     vcf_writer = VariantFile(filtered_vcf, mode="w", header=vcf_reader.header)
 
     for record in vcf_reader.fetch():
@@ -61,6 +55,7 @@ def mutationalpatterns(outdir, sample_id, vcf, sigprob, nofilter):
         if ("PASS" in list(record.filter) or not list(record.filter)) and not nofilter:
             vcf_writer.write(record)
             filtered += 1
+    vcf_writer.close()
 
     click.echo("Total SNVs: " + str(total))
     if not nofilter:
@@ -81,6 +76,8 @@ def mutationalpatterns(outdir, sample_id, vcf, sigprob, nofilter):
 
     click.echo("Running R Mutational Patterns:%s" % " ".join(cmd))
     subprocess.check_call(cmd)
+
+    os.unlink(filtered_vcf.name)
 
     # Check output files were generated.
     outputfiles = [
