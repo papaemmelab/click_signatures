@@ -68,7 +68,7 @@ pal = colorRampPalette(brewer.pal(11,"Spectral"))(ncol(cancer_signatures))[selec
 png(filename="signature_contributions.png", type="cairo", width = 8, height = 6, units = 'in', res=600)
 plot_contribution(
   fit_res$contribution[select,,drop = FALSE],
-  cancer_signatures[,select],
+  cancer_signatures[,select,drop = FALSE],
   coord_flip = TRUE,
   mode = "absolute",
   palette = pal)
